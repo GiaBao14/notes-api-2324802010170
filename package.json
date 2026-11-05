@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "express": "^5.3.0"
+  },
+  "name": "notes-api-2324802010170",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  }
+}

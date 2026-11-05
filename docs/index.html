@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Bài thực hành 1 - Lập trình trên máy ảo đám mây đầu tiên">
+  <title>TH1 - Hello Cloud | Cloud Computing</title>
+
+  <style>
+    :root {
+      --background: #0b1220;
+      --surface: #121e30;
+      --surface-light: #192941;
+      --text: #edf3ff;
+      --muted: #a9bad1;
+      --accent: #55d6be;
+      --border: #2b405d;
+      --warning: #f6c56b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .container {
+      width: min(1100px, 92%);
+      margin: auto;
+    }
+
+    header {
+      padding: 65px 0 45px;
+      background: linear-gradient(135deg, #142b43, #0b1220 75%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(38px, 7vw, 62px);
+      line-height: 1.15;
+      margin: 12px 0;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .intro {
+      color: var(--muted);
+      max-width: 760px;
+      font-size: 17px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .tag {
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 5px 13px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    section { padding: 32px 0; }
+
+    h2 {
+      font-size: 26px;
+      margin-bottom: 6px;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      margin-top: 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-light);
+      color: var(--accent);
+    }
+
+    td { color: var(--muted); }
+
+    tr:last-child td { border-bottom: none; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 20px;
+    }
+
+    .number {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 8px 0;
+    }
+
+    .card p {
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .api-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 22px;
+      margin-top: 18px;
+    }
+
+    code {
+      color: var(--accent);
+      background: #07101d;
+      border-radius: 5px;
+      padding: 3px 7px;
+      overflow-wrap: anywhere;
+    }
+
+    .note {
+      color: var(--warning);
+      background: #2a2418;
+      border-left: 3px solid var(--warning);
+      padding: 13px 16px;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+
+    a { color: var(--accent); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 25px 0 35px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      header { padding-top: 42px; }
+      section { padding: 23px 0; }
+      h2 { font-size: 22px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="eyebrow">Cloud Computing Lab · Bài thực hành 01</div>
+      <h1>Hello <span>Cloud!</span></h1>
+      <p class="intro">
+        Lập trình trên máy ảo đám mây đầu tiên. Thực hành tạo môi trường
+        phát triển bằng GitHub Codespaces, xây dựng API Hello Cloud và
+        đối chiếu trải nghiệm với năm đặc tính điện toán đám mây của NIST.
+      </p>
+      <div class="tags">
+        <span class="tag">GitHub</span>
+        <span class="tag">Codespaces</span>
+        <span class="tag">Node.js</span>
+        <span class="tag">Express</span>
+        <span class="tag">GitHub Pages</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section>
+      <h2>1. Thông tin bài thực hành</h2>
+      <div class="api-box">
+        <p><strong>Tên bài:</strong> Lập trình trên máy ảo đám mây đầu tiên</p>
+        <p><strong>Học phần:</strong> Điện toán đám mây</p>
+        <p><strong>Sinh viên:</strong> GiaBao14</p>
+        <p><strong>MSSV:</strong> 2324802010170</p>
+        <p><strong>Repository:</strong>
+          <a href="https://github.com/GiaBao14/notes-api-2324802010170" target="_blank" rel="noopener">
+            notes-api-2324802010170
+          </a>
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Bảng so sánh máy cá nhân và máy ảo đám mây</h2>
+      <p class="section-desc">
+        Số liệu máy cá nhân được lấy từ Windows PowerShell.
+        Số liệu máy ảo được lấy từ API Hello Cloud chạy trong Codespaces.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tiêu chí</th>
+              <th>Máy cá nhân</th>
+              <th>Máy ảo đám mây (Codespaces)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Thời gian từ lúc bắt đầu đến khi chạy được node -v</td>
+              <td>Chưa ghi nhận thời gian trong lần thực hiện.</td>
+              <td>Chưa ghi nhận thời gian trong lần khởi tạo đầu tiên.</td>
+            </tr>
+            <tr>
+              <td>Số CPU, RAM</td>
+              <td>
+                Intel Core i5-12450HX;<br>
+                8 lõi vật lý, 12 luồng logic;<br>
+                RAM 15.7 GB.
+              </td>
+              <td>
+                2 CPU logic;<br>
+                RAM 7.8 GB.
+              </td>
+            </tr>
+            <tr>
+              <td>Hệ điều hành</td>
+              <td>
+                Windows 11 Home Single Language;<br>
+                64-bit, version 10.0.26200.
+              </td>
+              <td>
+                Linux;<br>
+                kernel 6.8.0-1064-azure;<br>
+                kiến trúc amd64.
+              </td>
+            </tr>
+            <tr>
+              <td>Cách truy cập từ thiết bị khác</td>
+              <td>
+                Chưa thử truy cập máy cá nhân từ thiết bị khác trong bài thực hành.
+              </td>
+              <td>
+                Chuyển Port 3000 sang Public trong Codespaces,
+                sau đó mở URL được chuyển tiếp trên điện thoại.
+                Sau khi kiểm tra cần chuyển lại Private.
+              </td>
+            </tr>
+            <tr>
+              <td>Chi phí, đo bằng gì</td>
+              <td>
+                Có chi phí phần cứng và điện năng sử dụng;
+                bài thực hành không đo riêng các khoản này.
+              </td>
+              <td>
+                Theo GitHub Billing Usage: dung lượng lưu trữ
+                0.538429 GB-month; Gross amount 0.03769 USD;
+                discount 0.03769 USD; Billed amount 0 USD.
+                Báo cáo CSV không có số liệu Compute/Core-hours.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        Ghi chú: Thời gian chạy node -v không được bấm giờ ở lần khởi tạo
+        đầu tiên. Số liệu Compute/Core-hours không xuất hiện trong CSV
+        Billing Usage đã tải; không đồng nhất GB-month lưu trữ với core-hours.
+      </div>
+    </section>
+
+    <section>
+      <h2>3. API Hello Cloud</h2>
+      <p class="section-desc">
+        Ứng dụng được xây dựng bằng Node.js và Express, tách phần ứng dụng
+        khỏi tệp khởi động để thuận tiện tái sử dụng.
+      </p>
+
+      <div class="api-box">
+        <p><strong>HTTP Method:</strong> <code>GET</code></p>
+        <p><strong>Endpoint:</strong> <code>/</code></p>
+        <p><strong>Port:</strong> <code>3000</code></p>
+        <p><strong>Thông điệp:</strong> Xin chào từ đám mây!</p>
+        <p><strong>Dữ liệu trả về:</strong> host, platform, cpus,
+          memoryGB, uptimeSec và time.</p>
+        <p><strong>Kết quả kiểm tra:</strong> API trả JSON thành công
+          trên trình duyệt máy tính và điện thoại.</p>
+      </div>
+
+      <div class="note">
+        API chạy trong Codespace khi môi trường hoạt động. GitHub Pages
+        chỉ xuất bản trang web tĩnh, không trực tiếp vận hành API Node.js.
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Năm đặc tính thiết yếu của điện toán đám mây theo NIST</h2>
+      <p class="section-desc">
+        Liên hệ từng đặc tính với thao tác đã thực hiện trong bài thực hành.
+      </p>
+
+      <div class="grid">
+        <article class="card">
+          <div class="number">01 · ON-DEMAND SELF-SERVICE</div>
+          <h3>Tự phục vụ theo nhu cầu</h3>
+          <p>
+            Sinh viên tự chọn repository, mở Code → Codespaces và tạo
+            môi trường phát triển mà không cần yêu cầu nhân viên quản trị
+            cấp máy hoặc tự cài đặt toàn bộ môi trường trên máy cá nhân.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="number">02 · BROAD NETWORK ACCESS</div>
+          <h3>Truy cập mạng rộng rãi</h3>
+          <p>
+            Môi trường Codespaces được truy cập qua trình duyệt.
+            API cổng 3000 được chuyển sang Public để điện thoại mở URL
+            và nhận dữ liệu JSON, sau đó có thể chuyển lại Private.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="number">03 · RESOURCE POOLING</div>
+          <h3>Gộp tài nguyên</h3>
+          <p>
+            Codespaces cấp tài nguyên tính toán từ hạ tầng đám mây của
+            nhà cung cấp. Sinh viên sử dụng máy ảo có 2 CPU logic và
+            7.8 GB RAM mà không trực tiếp quản lý máy chủ vật lý.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="number">04 · RAPID ELASTICITY</div>
+          <h3>Co giãn nhanh</h3>
+          <p>
+            Sinh viên có thể khởi chạy hoặc dừng Codespace theo nhu cầu.
+            Đây là trải nghiệm cấp phát và ngừng sử dụng môi trường;
+            bài thực hành chưa thử tăng hoặc giảm cấu hình CPU và RAM.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="number">05 · MEASURED SERVICE</div>
+          <h3>Dịch vụ đo lường được</h3>
+          <p>
+            GitHub Billing Usage ghi nhận mức sử dụng lưu trữ
+            0.538429 GB-month, Gross amount 0.03769 USD và Billed amount
+            0 USD sau khi áp dụng included usage discount.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Kết luận</h2>
+      <div class="api-box">
+        <p>
+          Qua bài thực hành, sinh viên đã tạo và sử dụng môi trường
+          phát triển trên GitHub Codespaces, xây dựng API Hello Cloud
+          bằng Node.js và Express, kiểm tra khả năng truy cập API từ
+          thiết bị di động và theo dõi mức sử dụng trên GitHub Billing.
+        </p>
+        <p>
+          Trải nghiệm cho thấy môi trường đám mây giúp người học sử dụng
+          tài nguyên qua mạng mà không phải trực tiếp quản lý máy chủ
+          vật lý. Một số chỉ số như thời gian khởi tạo ban đầu và
+          Compute/Core-hours chưa được ghi nhận trong lần thực hiện này.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Tài liệu tham khảo</h2>
+      <p>
+        NIST Special Publication 800-145:
+        <a href="https://doi.org/10.6028/NIST.SP.800-145" target="_blank" rel="noopener">
+          The NIST Definition of Cloud Computing
+        </a>.
+      </p>
+      <p>
+        <a href="https://github.com/GiaBao14/notes-api-2324802010170"
+           target="_blank" rel="noopener">
+          Xem mã nguồn trên GitHub
+        </a>
+      </p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      TH1 · Cloud Computing Lab · MSSV: 2324802010170
+    </div>
+  </footer>
+</body>
+</html>
