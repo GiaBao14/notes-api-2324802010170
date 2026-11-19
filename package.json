@@ -1,6 +1,10 @@
 {
   "dependencies": {
-    "express": "^5.3.0"
+    "@supabase/supabase-js": "^2.119.1",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "mongoose": "^9.12.2",
+    "multer": "^2.5.0"
   },
   "name": "notes-api-2324802010170",
   "version": "1.0.0",

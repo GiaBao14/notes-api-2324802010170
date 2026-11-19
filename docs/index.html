@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Bài thực hành 1 - Lập trình trên máy ảo đám mây đầu tiên">
-  <title>TH1 - Hello Cloud | Cloud Computing</title>
+  <title>Cloud Computing Lab - TH1 và TH3</title>
 
   <style>
     :root {
@@ -186,6 +186,76 @@
       section { padding: 23px 0; }
       h2 { font-size: 22px; }
     }
+
+    .architecture-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .architecture {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 20px;
+    }
+
+    .architecture-node {
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    .architecture-node.primary {
+      border: 2px solid var(--accent);
+    }
+
+    .architecture-node strong {
+      display: block;
+      color: var(--text);
+    }
+
+    .architecture-node small {
+      color: var(--muted);
+    }
+
+    .node-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .node-grid.three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .diagram-arrow {
+      color: var(--accent);
+      text-align: center;
+      font-size: 14px;
+      padding: 5px;
+    }
+
+    .metric-highlight {
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 28px;
+    }
+
+    .architecture-node.block {
+      border-color: #55a9d6;
+    }
+
+    @media (max-width: 600px) {
+      .node-grid.three {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -421,6 +491,383 @@
            target="_blank" rel="noopener">
           Xem mã nguồn trên GitHub
         </a>
+      </p>
+    </section>
+
+
+    <!-- BAI THUC HANH 3 -->
+    <section id="th3">
+      <h2>7. Bài thực hành 3 – Lưu trữ phân tán: NoSQL và lưu trữ đối tượng</h2>
+      <p class="section-desc">
+        Tích hợp MongoDB Atlas (DBaaS) và Supabase Storage vào API Notes,
+        thực hiện CRUD, tải tệp đính kèm và đo hiệu quả chỉ mục.
+      </p>
+
+      <div class="api-box">
+        <p><strong>MongoDB Atlas:</strong> Cluster0, gói Free (M0),
+          AWS Singapore (ap-southeast-1).</p>
+        <p><strong>Database:</strong> notes.</p>
+        <p><strong>Database User:</strong> notes_app,
+          quyền readWrite trên database notes.</p>
+        <p><strong>Network Access:</strong> 0.0.0.0/0 theo yêu cầu
+          bài thực hành.</p>
+        <p><strong>Supabase Project:</strong> cloud-lab-storage,
+          vùng Singapore.</p>
+        <p><strong>Storage Bucket:</strong> attachments (Public).</p>
+        <p><strong>Backend:</strong> Node.js, Express 5.3.0,
+          Mongoose, Multer và Supabase JavaScript Client.</p>
+      </div>
+
+      <div class="note">
+        Khóa Supabase Secret và chuỗi kết nối MongoDB được lưu trong
+        file .env ở phía máy chủ. File .env được khai báo trong
+        .gitignore và không đưa lên GitHub.
+      </div>
+    </section>
+
+    <section>
+      <h2>8. Kiến trúc lưu trữ và xử lý dữ liệu</h2>
+      <div class="architecture-grid">
+        <article class="architecture">
+          <h3>Ứng dụng Notes API</h3>
+          <div class="architecture-node">
+            <strong>Client / HTTP Request</strong>
+            <small>Gửi yêu cầu CRUD và tệp đính kèm</small>
+          </div>
+          <div class="diagram-arrow">↓</div>
+          <div class="architecture-node primary">
+            <strong>Node.js + Express API</strong>
+            <small>Nhận yêu cầu, xử lý nghiệp vụ</small>
+          </div>
+          <div class="node-grid">
+            <div class="architecture-node">
+              <strong>MongoDB Atlas</strong>
+              <small>Lưu ghi chú, tags và attachmentUrl</small>
+            </div>
+            <div class="architecture-node">
+              <strong>Supabase Storage</strong>
+              <small>Lưu tệp đính kèm dạng object</small>
+            </div>
+          </div>
+          <p>
+            MongoDB lưu dữ liệu ghi chú và URL của tệp.
+            Supabase Storage lưu nội dung tệp thực tế.
+          </p>
+        </article>
+        <article class="architecture">
+          <h3>Cấu trúc dữ liệu Note</h3>
+          <div class="architecture-node">
+            <strong>MongoDB Collection: notes</strong>
+            <small>Mỗi document đại diện cho một ghi chú</small>
+          </div>
+          <div class="api-box">
+            <p><strong>title:</strong> Tiêu đề ghi chú</p>
+            <p><strong>content:</strong> Nội dung</p>
+            <p><strong>tags:</strong> Mảng nhãn</p>
+            <p><strong>attachmentUrl:</strong> Đường dẫn tệp trên Storage</p>
+            <p><strong>owner:</strong> Chủ sở hữu</p>
+            <p><strong>createdAt, updatedAt:</strong> Thời gian tạo và cập nhật</p>
+            <p><strong>Index:</strong> tags ascending (tags: 1)</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>9. Kết quả kiểm thử API và lưu trữ tệp</h2>
+      <p class="section-desc">
+        Các endpoint được kiểm thử trực tiếp bằng curl trong GitHub Codespaces.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Thao tác</th>
+              <th>Endpoint</th>
+              <th>HTTP Status</th>
+              <th>Kết quả</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tạo ghi chú</td>
+              <td>POST /notes</td>
+              <td>201 Created</td>
+              <td>Tạo document thành công trong MongoDB.</td>
+            </tr>
+            <tr>
+              <td>Lấy danh sách</td>
+              <td>GET /notes</td>
+              <td>200 OK</td>
+              <td>Trả về danh sách ghi chú.</td>
+            </tr>
+            <tr>
+              <td>Lọc theo tag</td>
+              <td>GET /notes?tag=nosql</td>
+              <td>200 OK</td>
+              <td>Trả về ghi chú có tag nosql.</td>
+            </tr>
+            <tr>
+              <td>Lấy chi tiết</td>
+              <td>GET /notes/:id</td>
+              <td>200 OK</td>
+              <td>Trả về ghi chú theo ID.</td>
+            </tr>
+            <tr>
+              <td>Cập nhật</td>
+              <td>PUT /notes/:id</td>
+              <td>200 OK</td>
+              <td>Cập nhật title, content và tags.</td>
+            </tr>
+            <tr>
+              <td>Tải tệp đính kèm</td>
+              <td>POST /notes/:id/attachment</td>
+              <td>200 OK</td>
+              <td>Tệp được tải lên bucket attachments; API trả attachmentUrl.</td>
+            </tr>
+            <tr>
+              <td>Xóa ghi chú</td>
+              <td>DELETE /notes/:id</td>
+              <td>204 No Content</td>
+              <td>Xóa document trong MongoDB.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        Thao tác DELETE trong phiên bản API thực hành chỉ xóa document
+        MongoDB, không tự động xóa object đã tải lên Supabase Storage.
+      </div>
+      <div class="api-box">
+        <p><strong>Tệp thử nghiệm:</strong> note.txt</p>
+        <p><strong>Bucket:</strong> attachments (Public).</p>
+        <p><strong>Đường dẫn object:</strong>
+          attachments/6afeb0f7e196b83df38822d6/1795076544145-note.txt
+        </p>
+        <p><strong>Kết quả:</strong> HTTP 200 OK; URL công khai mở được
+          và tệp xuất hiện trong Supabase Storage.</p>
+        <p>
+          <a href="https://awzsmigotnksojzobbbu.supabase.co/storage/v1/object/public/attachments/6afeb0f7e196b83df38822d6/1795076544145-note.txt"
+             target="_blank" rel="noopener">Mở tệp thử nghiệm trên Supabase Storage</a>
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>10. Thực nghiệm đo hiệu quả chỉ mục MongoDB</h2>
+      <p class="section-desc">
+        Chương trình scripts/seed.js tạo 2.000 ghi chú mẫu.
+        Chương trình scripts/explain.js so sánh truy vấn tags = docker
+        khi quét tự nhiên và khi sử dụng chỉ mục tags.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Phương pháp truy vấn</th>
+              <th>docsExamined</th>
+              <th>nReturned</th>
+              <th>executionTimeMillis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Quét toàn bộ ($natural)</td>
+              <td>2.000</td>
+              <td>571</td>
+              <td>1 ms</td>
+            </tr>
+            <tr>
+              <td>Dùng chỉ mục tags</td>
+              <td>571</td>
+              <td>571</td>
+              <td>1 ms</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <div class="number">TỶ LỆ GIẢM KHỐI LƯỢNG QUÉT</div>
+          <div class="metric-highlight">71,45%</div>
+          <p>Số tài liệu được kiểm tra giảm từ 2.000 xuống 571.</p>
+        </article>
+        <article class="card">
+          <div class="number">HỆ SỐ GIẢM</div>
+          <div class="metric-highlight">3,50 lần</div>
+          <p>Quét toàn bộ kiểm tra số tài liệu nhiều hơn khoảng 3,5 lần.</p>
+        </article>
+      </div>
+      <div class="note">
+        Hai phương pháp đều trả về 571 tài liệu và có thời gian đo được
+        là 1 ms. Vì vậy, lần đo này chứng minh rõ mức giảm docsExamined,
+        chưa chứng minh được chênh lệch thời gian thực thi.
+      </div>
+      <p>
+        Công thức tính tỷ lệ giảm:
+        <code>(2.000 - 571) / 2.000 × 100 = 71,45%</code>.
+      </p>
+    </section>
+
+    <section>
+      <h2>11. Quan sát nhân bản MongoDB Atlas và so sánh HDFS</h2>
+      <p class="section-desc">
+        Metrics của Cluster0 hiển thị ba thành viên replica set:
+        hai Secondary (S) và một Primary (P).
+      </p>
+
+      <div class="architecture-grid">
+        <article class="architecture">
+          <h3>MongoDB Atlas – Replica Set</h3>
+          <div class="architecture-node primary">
+            <strong>Primary (P)</strong>
+            <small>Tiếp nhận thao tác ghi dữ liệu</small>
+          </div>
+          <div class="diagram-arrow">↓ Sao chép thay đổi qua oplog ↓</div>
+          <div class="node-grid">
+            <div class="architecture-node">
+              <strong>Secondary 1 (S)</strong>
+              <small>Bản sao dữ liệu</small>
+            </div>
+            <div class="architecture-node">
+              <strong>Secondary 2 (S)</strong>
+              <small>Bản sao dữ liệu</small>
+            </div>
+          </div>
+          <p>
+            Replica set duy trì nhiều bản sao dữ liệu. Khi Primary gặp sự cố,
+            các thành viên có thể tham gia bầu chọn Primary mới nếu đủ điều kiện.
+          </p>
+        </article>
+
+        <article class="architecture">
+          <h3>HDFS – Replication Factor 3</h3>
+          <div class="architecture-node primary">
+            <strong>NameNode</strong>
+            <small>Quản lý metadata và vị trí các block</small>
+          </div>
+          <div class="diagram-arrow">↓ Quản lý phân bố bản sao block ↓</div>
+          <div class="node-grid three">
+            <div class="architecture-node block">
+              <strong>DataNode 1</strong>
+              <small>Block A</small>
+            </div>
+            <div class="architecture-node block">
+              <strong>DataNode 2</strong>
+              <small>Block A</small>
+            </div>
+            <div class="architecture-node block">
+              <strong>DataNode 3</strong>
+              <small>Block A</small>
+            </div>
+          </div>
+          <p>
+            HDFS lưu các bản sao của từng block trên các DataNode.
+            NameNode quản lý metadata và vị trí lưu trữ.
+          </p>
+        </article>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tiêu chí</th>
+              <th>MongoDB Atlas</th>
+              <th>HDFS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mô hình</td>
+              <td>Replica Set</td>
+              <td>Distributed File System</td>
+            </tr>
+            <tr>
+              <td>Thành phần</td>
+              <td>Primary và Secondary</td>
+              <td>NameNode và DataNode</td>
+            </tr>
+            <tr>
+              <td>Đơn vị nhân bản</td>
+              <td>Dữ liệu database</td>
+              <td>Block dữ liệu</td>
+            </tr>
+            <tr>
+              <td>Mục tiêu</td>
+              <td>Dự phòng, chịu lỗi và tính sẵn sàng.</td>
+              <td>Dự phòng block, chịu lỗi và độ tin cậy lưu trữ.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        Hình DataNode minh họa ba vị trí lưu bản sao của một block,
+        không có nghĩa HDFS chỉ có ba DataNode. Vai trò Primary và Secondary
+        trong Atlas cũng có thể thay đổi khi replica set bầu chọn lại.
+      </div>
+    </section>
+
+    <section>
+      <h2>12. Câu hỏi phản biện</h2>
+
+      <div class="api-box">
+        <h3>Câu 1. Hiệu quả chỉ mục khi dữ liệu tăng lên 2 triệu tài liệu</h3>
+        <p>
+          Với 2.000 tài liệu, quét toàn bộ phải kiểm tra 2.000 tài liệu,
+          trong khi sử dụng chỉ mục chỉ kiểm tra 571 tài liệu, giảm 71,45%.
+          Nếu bộ sưu tập tăng lên 2 triệu tài liệu và tỷ lệ dữ liệu giữ nguyên,
+          quét toàn bộ có thể phải kiểm tra khoảng 2 triệu tài liệu, còn truy vấn
+          dùng chỉ mục ước tính kiểm tra khoảng 571.000 tài liệu. Chỉ mục giúp
+          giảm đáng kể khối lượng xử lý. Tuy nhiên, giới hạn 100 thao tác/giây
+          vẫn có thể gây nghẽn khi có nhiều yêu cầu đồng thời.
+        </p>
+        <p>
+          Đây là phép ngoại suy dựa trên tỷ lệ dữ liệu thử nghiệm, không phải
+          kết quả đo thực tế trên 2 triệu tài liệu. Giới hạn thao tác/giây
+          cũng không đồng nghĩa với số tài liệu được quét mỗi giây.
+        </p>
+      </div>
+
+      <div class="api-box">
+        <h3>Câu 2. Vì sao lưu tệp trên Supabase Storage và chỉ lưu URL trong MongoDB?</h3>
+        <p>
+          Supabase Storage phù hợp để lưu các tệp như hình ảnh và tài liệu,
+          còn MongoDB lưu dữ liệu ghi chú và URL tham chiếu đến tệp.
+          Cách này giữ document MongoDB gọn nhẹ, tách biệt dữ liệu có cấu trúc
+          với nội dung tệp nhị phân, thuận tiện quản lý và truy cập tệp qua URL.
+        </p>
+      </div>
+
+      <div class="api-box">
+        <h3>Câu 3. Mục tiêu chung của nhân bản ba bản sao trong Atlas và HDFS</h3>
+        <p>
+          Cả hai mô hình đều hướng đến khả năng chịu lỗi, dự phòng dữ liệu
+          và duy trì tính sẵn sàng khi một nút hoặc máy chủ gặp sự cố.
+          Tuy nhiên, MongoDB Atlas nhân bản dữ liệu database giữa các thành viên
+          Primary và Secondary, còn HDFS nhân bản từng block dữ liệu trên
+          các DataNode. Mục tiêu tương đồng nhưng đơn vị nhân bản khác nhau.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>13. Tài liệu tham khảo TH3</h2>
+      <p>
+        <a href="https://www.mongodb.com/docs/manual/replication/"
+           target="_blank" rel="noopener">MongoDB Manual – Replication</a>
+      </p>
+      <p>
+        <a href="https://www.mongodb.com/docs/manual/indexes/"
+           target="_blank" rel="noopener">MongoDB Manual – Indexes</a>
+      </p>
+      <p>
+        <a href="https://supabase.com/docs/guides/storage"
+           target="_blank" rel="noopener">Supabase Documentation – Storage</a>
+      </p>
+      <p>
+        <a href="https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html"
+           target="_blank" rel="noopener">Apache Hadoop – HDFS Architecture</a>
       </p>
     </section>
 
