@@ -1,10 +1,28 @@
 const express = require('express');
 const os = require('os');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
 const notesRouter = require('./routes/notes');
+const authRouter = require('./routes/auth');
+
+mongoose.set('sanitizeFilter', true);
 
 const app = express();
 
-app.use(express.json());
+app.set('trust proxy', 1);
+app.use(helmet());
+app.use(express.json({ limit: '100kb' }));
+
+// Giới hạn đăng nhập và đăng ký: 20 yêu cầu / 15 phút
+app.use(
+  '/auth',
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20
+  }),
+  authRouter
+);
 
 // API Hello Cloud từ TH1
 app.get('/', (req, res) => {
@@ -19,7 +37,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// API quản lý ghi chú từ TH3
+// API Notes yêu cầu đăng nhập JWT
 app.use('/notes', notesRouter);
 
 // Middleware xử lý lỗi

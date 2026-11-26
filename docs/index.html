@@ -871,11 +871,295 @@
       </p>
     </section>
 
+      <section>
+      <h2>14. Bài thực hành 4 – Bảo mật ứng dụng đám mây</h2>
+      <p>
+        Bài thực hành 4 tập trung bảo vệ ứng dụng Notes API bằng ba lớp:
+        quản lý bí mật, xác thực và phân quyền người dùng, kiểm tra lỗ hổng
+        trong thư viện và Docker Image.
+      </p>
+
+      <h3>14.1. Quản lý bí mật và bảo vệ repository</h3>
+      <p>
+        Các biến MONGODB_URI, SUPABASE_URL, SUPABASE_SERVICE_KEY và
+        JWT_SECRET được chuyển vào GitHub Codespaces Secrets và cấp quyền
+        cho repository notes-api-2324802010170. Sau khi xác nhận cả bốn
+        biến môi trường đều khả dụng, tệp .env đã được xóa khỏi Codespace.
+        Quy tắc .env vẫn được giữ trong .gitignore và Git xác nhận tệp
+        này không được theo dõi.
+      </p>
+      <p>
+        Repository đã bật Dependency Graph, Dependabot Alerts,
+        Secret Protection và Push Protection. Push Protection đang ở
+        trạng thái On. Kết quả kiểm tra Dependabot ghi nhận 0 cảnh báo
+        đang mở.
+      </p>
+
+      <h3>14.2. Xây dựng xác thực JWT và phân quyền theo chủ sở hữu</h3>
+      <p>
+        Ứng dụng sử dụng bcryptjs để băm mật khẩu, jsonwebtoken để tạo
+        và xác minh JWT, Helmet để thiết lập các HTTP security headers,
+        express-rate-limit để giới hạn yêu cầu và Mongoose sanitizeFilter
+        để bổ sung bảo vệ cho truy vấn MongoDB.
+      </p>
+      <p>
+        JWT được cấp sau khi đăng nhập thành công, có thời hạn một giờ.
+        Middleware xác minh Bearer Token và gán thông tin người dùng vào
+        req.user. Các thao tác với ghi chú được lọc theo owner bằng ID
+        người dùng lấy từ JWT, do đó mỗi người dùng chỉ được truy cập
+        dữ liệu thuộc sở hữu của mình.
+      </p>
+
+      <h3>14.3. Kết quả kiểm thử xác thực và phân quyền</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Trường hợp kiểm thử</th>
+            <th>Kết quả thực tế</th>
+            <th>Đánh giá</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Đăng ký người dùng A</td>
+            <td>201 Created</td>
+            <td>Thành công</td>
+          </tr>
+          <tr>
+            <td>Đăng nhập người dùng A</td>
+            <td>Nhận được JWT</td>
+            <td>Thành công</td>
+          </tr>
+          <tr>
+            <td>Truy cập /notes không có token</td>
+            <td>401 Unauthorized</td>
+            <td>Bị từ chối</td>
+          </tr>
+          <tr>
+            <td>Truy cập /notes bằng token hợp lệ</td>
+            <td>200 OK</td>
+            <td>Được phép</td>
+          </tr>
+          <tr>
+            <td>Người dùng A đọc ghi chú của A</td>
+            <td>200 OK</td>
+            <td>Được phép</td>
+          </tr>
+          <tr>
+            <td>Người dùng B đăng ký và đăng nhập</td>
+            <td>201 Created, nhận được JWT</td>
+            <td>Thành công</td>
+          </tr>
+          <tr>
+            <td>Người dùng B đọc ghi chú của A</td>
+            <td>404 Not Found</td>
+            <td>Đúng yêu cầu phân quyền</td>
+          </tr>
+          <tr>
+            <td>Gửi đối tượng $gt thay cho email dạng chuỗi</td>
+            <td>401 Unauthorized</td>
+            <td>Yêu cầu không hợp lệ bị từ chối</td>
+          </tr>
+          <tr>
+            <td>20 lần đăng nhập sai đầu tiên</td>
+            <td>401 Unauthorized</td>
+            <td>Chưa vượt giới hạn</td>
+          </tr>
+          <tr>
+            <td>Lần đăng nhập sai thứ 21 đến 25</td>
+            <td>429 Too Many Requests</td>
+            <td>Rate Limit hoạt động</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Kết quả kiểm thử chéo cho thấy người dùng B không thể đọc ghi chú
+        của A dù biết ID của ghi chú. API trả về 404 thay vì 403 để không
+        tiết lộ sự tồn tại của dữ liệu thuộc người dùng khác.
+      </p>
+
+      <h3>14.4. Quét lỗ hổng thư viện và Docker Image</h3>
+      <p>
+        Lệnh npm audit --omit=dev trả về found 0 vulnerabilities,
+        tức không phát hiện lỗ hổng trong các dependencies production
+        được kiểm tra của dự án.
+      </p>
+      <p>
+        Hai Docker Image được xây dựng từ cùng mã nguồn và dependencies,
+        chỉ khác image nền: node:22-alpine và node:22. Kích thước được
+        đo bằng docker image ls.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Docker Image</th>
+            <th>Image nền</th>
+            <th>Disk Usage</th>
+            <th>Content Size</th>
+            <th>HIGH</th>
+            <th>CRITICAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>notes-api:alpine</td>
+            <td>node:22-alpine</td>
+            <td>289 MB</td>
+            <td>71.4 MB</td>
+            <td>10</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>notes-api:full</td>
+            <td>node:22</td>
+            <td>1.67 GB</td>
+            <td>419 MB</td>
+            <td>479</td>
+            <td>20</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Kết quả quét Trivy cho thấy image Full có Content Size lớn khoảng
+        5,87 lần image Alpine. Trong lần quét này, image Alpine có 10 phát
+        hiện HIGH và không có CRITICAL; image Full có 479 phát hiện HIGH
+        và 20 CRITICAL. Đây là số bản ghi phát hiện do Trivy tổng hợp
+        trên các thành phần được quét, không đồng nghĩa tất cả đều có thể
+        khai thác trực tiếp trong ứng dụng.
+      </p>
+      <p>
+        Alpine sử dụng image nền tối giản nên có ít thành phần hệ thống
+        hơn và kích thước nhỏ hơn. Tuy nhiên, ít phát hiện hơn không đồng
+        nghĩa image hoàn toàn an toàn. Cần tiếp tục cập nhật image nền,
+        theo dõi phiên bản package và đánh giá khả năng ảnh hưởng thực tế
+        của từng lỗ hổng.
+      </p>
+      <p>
+        Trivy và Dependabot có phạm vi kiểm tra khác nhau. Dependabot
+        không có cảnh báo đang mở trong repository, trong khi Trivy quét
+        cả các thành phần hệ điều hành và package nằm bên trong Docker
+        Image. Vì vậy, hai kết quả không nhất thiết giống nhau.
+      </p>
+
+      <h3>14.5. Phân tích rủi ro Network Access của MongoDB Atlas</h3>
+      <p>
+        Network Access của MongoDB Atlas đang có quy tắc 0.0.0.0/0 ở
+        trạng thái Active để hỗ trợ kết nối từ GitHub Codespaces và
+        Vercel, là những môi trường không có IP cố định trong cấu hình
+        thực hành này.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Nội dung</th>
+            <th>Phân tích</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Quyết định rủi ro</td>
+            <td>Mở Network Access với 0.0.0.0/0, cho phép mọi địa chỉ IPv4 thử kết nối đến cluster.</td>
+          </tr>
+          <tr>
+            <td>Rủi ro cụ thể</td>
+            <td>Nếu thông tin xác thực bị lộ hoặc mật khẩu yếu, bên ngoài có thể thử truy cập trái phép vào cơ sở dữ liệu.</td>
+          </tr>
+          <tr>
+            <td>Giới hạn quyền</td>
+            <td>Ứng dụng sử dụng database user notes_app với quyền readWrite trên database notes.</td>
+          </tr>
+          <tr>
+            <td>Bảo vệ thông tin xác thực</td>
+            <td>Sử dụng mật khẩu ngẫu nhiên và lưu MongoDB URI trong GitHub Codespaces Secrets.</td>
+          </tr>
+          <tr>
+            <td>Mã hóa đường truyền</td>
+            <td>MongoDB Atlas sử dụng TLS để bảo vệ dữ liệu truyền giữa ứng dụng và cơ sở dữ liệu.</td>
+          </tr>
+          <tr>
+            <td>Biện pháp bù trừ</td>
+            <td>Giới hạn quyền database, bảo vệ mật khẩu, không đưa bí mật vào mã nguồn và bật các cơ chế bảo vệ repository.</td>
+          </tr>
+          <tr>
+            <td>Phương án tốt hơn</td>
+            <td>Sử dụng IP tĩnh và chỉ cho phép địa chỉ tin cậy; nếu có ngân sách và hạ tầng phù hợp, triển khai Private Endpoint hoặc VPC Peering.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Quy tắc 0.0.0.0/0 giúp kết nối thuận tiện nhưng làm tăng bề mặt
+        tấn công. Các biện pháp bù trừ giúp giảm thiểu rủi ro nhưng không
+        thay thế việc giới hạn địa chỉ IP được phép kết nối.
+      </p>
+
+      <h3>14.6. Câu hỏi phản biện</h3>
+
+      <h4>Câu 1. JWT có thời hạn 1 giờ và không lưu trên máy chủ. Nếu token bị lộ, hệ thống làm gì được trong 1 giờ đó? Đề xuất một cách khắc phục và nêu chi phí của nó.</h4>
+      <p>
+        JWT trong bài thực hành là token không trạng thái nên máy chủ
+        không lưu phiên đăng nhập để kiểm tra từng yêu cầu. Nếu token
+        bị lộ, kẻ tấn công có thể sử dụng token đó để truy cập API với
+        quyền của người dùng cho đến khi token hết hạn sau một giờ.
+        Máy chủ không thể tự động thu hồi token đã cấp chỉ bằng cách
+        thay đổi trạng thái đăng nhập của người dùng.
+      </p>
+      <p>
+        Một giải pháp là xây dựng cơ chế thu hồi token bằng danh sách đen
+        (token blacklist). Mỗi token có mã định danh jti; khi người dùng
+        đăng xuất hoặc phát hiện token bị lộ, máy chủ lưu jti vào Redis
+        hoặc cơ sở dữ liệu cho đến khi token hết hạn. Middleware kiểm tra
+        danh sách này trước khi cho phép truy cập.
+      </p>
+      <p>
+        Giải pháp giúp thu hồi token sớm nhưng làm tăng chi phí lưu trữ,
+        truy vấn và quản lý trạng thái phía máy chủ. Hệ thống cũng phức
+        tạp hơn so với JWT không trạng thái ban đầu.
+      </p>
+
+      <h4>Câu 2. Vì sao image Alpine thường có ít lỗ hổng hơn? Ít lỗ hổng được báo cáo có đồng nghĩa với an toàn hơn không?</h4>
+      <p>
+        Alpine thường có kích thước nhỏ hơn vì sử dụng hệ điều hành tối
+        giản và chỉ bao gồm những package cần thiết. Số lượng thành phần
+        ít hơn giúp giảm bề mặt tấn công và hạn chế số package có khả năng
+        chứa lỗ hổng.
+      </p>
+      <p>
+        Tuy nhiên, ít lỗ hổng được báo cáo không đồng nghĩa image hoàn
+        toàn an toàn. Kết quả còn phụ thuộc vào phiên bản package, thời
+        điểm cập nhật cơ sở dữ liệu lỗ hổng, khả năng phát hiện của công
+        cụ quét và mức độ ảnh hưởng thực tế của từng lỗ hổng. Kết quả
+        thực nghiệm cho thấy Alpine có ít phát hiện hơn Full nhưng vẫn
+        cần cập nhật thường xuyên và kiểm tra các thành phần đang sử dụng.
+      </p>
+
+      <h4>Câu 3. Theo mô hình trách nhiệm chia sẻ, trong bài này phần nào thuộc trách nhiệm của MongoDB/Supabase, phần nào thuộc về nhóm phát triển?</h4>
+      <p>
+        Theo mô hình trách nhiệm chia sẻ, nhà cung cấp dịch vụ chịu trách
+        nhiệm bảo vệ hạ tầng và các thành phần nền tảng mà họ quản lý.
+        MongoDB Atlas chịu trách nhiệm vận hành hạ tầng cơ sở dữ liệu
+        được quản lý, bảo vệ nền tảng và cung cấp các cơ chế như xác
+        thực, mã hóa đường truyền và nhân bản dữ liệu. Supabase chịu
+        trách nhiệm vận hành nền tảng lưu trữ và bảo vệ hạ tầng dịch vụ.
+      </p>
+      <p>
+        Nhóm phát triển chịu trách nhiệm cấu hình dịch vụ đúng cách,
+        quản lý thông tin xác thực, phân quyền người dùng, bảo vệ JWT,
+        kiểm soát truy cập dữ liệu và cập nhật các thư viện của ứng dụng.
+        Nhóm cũng phải cấu hình Network Access hợp lý, bảo vệ Supabase
+        Secret Key và thiết lập chính sách truy cập đối với bucket lưu trữ.
+      </p>
+      <p>
+        Như vậy, nhà cung cấp bảo vệ nền tảng dịch vụ, còn nhóm phát
+        triển chịu trách nhiệm bảo vệ ứng dụng, dữ liệu và cách sử dụng
+        dịch vụ đó.
+      </p>
+    </section>
+
   </main>
 
   <footer>
     <div class="container">
-      TH1 · Cloud Computing Lab · MSSV: 2324802010170
+      TH1–TH4 · Cloud Computing Lab · MSSV: 2324802010170
     </div>
   </footer>
 </body>

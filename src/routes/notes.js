@@ -2,19 +2,25 @@ const express = require('express');
 const multer = require('multer');
 const Note = require('../models/note');
 const { bucket } = require('../storage');
+const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Yêu cầu đăng nhập cho tất cả API /notes
+router.use(requireAuth);
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 } // 2 MB
+  limits: { fileSize: 2 * 1024 * 1024 }
 });
 
-// Lấy danh sách ghi chú, có thể lọc theo tag
+// Lấy danh sách ghi chú của người dùng hiện tại
 router.get('/', async (req, res) => {
-  const filter = req.query.tag
-    ? { tags: String(req.query.tag) }
-    : {};
+  const filter = { owner: req.user.sub };
+
+  if (req.query.tag) {
+    filter.tags = String(req.query.tag);
+  }
 
   const notes = await Note.find(filter)
     .sort({ createdAt: -1 })
@@ -23,9 +29,12 @@ router.get('/', async (req, res) => {
   res.json(notes);
 });
 
-// Lấy một ghi chú theo ID
+// Lấy một ghi chú thuộc người dùng hiện tại
 router.get('/:id', async (req, res) => {
-  const note = await Note.findById(req.params.id);
+  const note = await Note.findOne({
+    _id: req.params.id,
+    owner: req.user.sub
+  });
 
   if (!note) {
     return res.status(404).json({ error: 'Không tìm thấy ghi chú' });
@@ -34,21 +43,29 @@ router.get('/:id', async (req, res) => {
   res.json(note);
 });
 
-// Tạo ghi chú
+// Tạo ghi chú gắn với người dùng hiện tại
 router.post('/', async (req, res) => {
   const { title, content, tags } = req.body ?? {};
 
-  const note = await Note.create({ title, content, tags });
+  const note = await Note.create({
+    title,
+    content,
+    tags,
+    owner: req.user.sub
+  });
 
   res.status(201).json(note);
 });
 
-// Cập nhật ghi chú
+// Chỉ cập nhật ghi chú của người dùng hiện tại
 router.put('/:id', async (req, res) => {
   const { title, content, tags } = req.body ?? {};
 
-  const note = await Note.findByIdAndUpdate(
-    req.params.id,
+  const note = await Note.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      owner: req.user.sub
+    },
     { title, content, tags },
     { new: true, runValidators: true }
   );
@@ -60,9 +77,12 @@ router.put('/:id', async (req, res) => {
   res.json(note);
 });
 
-// Xóa ghi chú
+// Chỉ xóa ghi chú của người dùng hiện tại
 router.delete('/:id', async (req, res) => {
-  const note = await Note.findByIdAndDelete(req.params.id);
+  const note = await Note.findOneAndDelete({
+    _id: req.params.id,
+    owner: req.user.sub
+  });
 
   if (!note) {
     return res.status(404).json({ error: 'Không tìm thấy ghi chú' });
@@ -71,13 +91,16 @@ router.delete('/:id', async (req, res) => {
   res.status(204).end();
 });
 
-// Tải tệp đính kèm lên Supabase Storage
+// Chỉ tải tệp lên ghi chú của người dùng hiện tại
 router.post('/:id/attachment', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Thiếu tệp ở trường "file"' });
   }
 
-  const note = await Note.findById(req.params.id);
+  const note = await Note.findOne({
+    _id: req.params.id,
+    owner: req.user.sub
+  });
 
   if (!note) {
     return res.status(404).json({ error: 'Không tìm thấy ghi chú' });
